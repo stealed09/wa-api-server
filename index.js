@@ -24,7 +24,10 @@ app.use(express.json({ limit: '50mb' }));
 const sessions = {};
 const sessionStatus = {};
 
-const SESSION_DIR = path.join(__dirname, 'sessions');
+// SESSION_DIR: use env var for Railway Volume support
+// On Railway: set SESSION_DIR=/data in environment variables + mount a Volume at /data
+// On VPS: leave unset, defaults to ./sessions
+const SESSION_DIR = process.env.SESSION_DIR || path.join(__dirname, 'sessions');
 if (!fs.existsSync(SESSION_DIR)) {
     fs.mkdirSync(SESSION_DIR, { recursive: true });
 }
@@ -121,6 +124,21 @@ app.get('/', (req, res) => {
         activeSessions: Object.keys(sessions).length,
         uptime: Math.floor(process.uptime()),
     });
+});
+
+// /health — Railway health check endpoint
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok', uptime: Math.floor(process.uptime()) });
+});
+
+// /sessions — list all active sessions (debug)
+app.get('/sessions', (req, res) => {
+    const list = Object.entries(sessionStatus).map(([key, status]) => ({
+        key,
+        status,
+        phone: sessions[key]?.user?.id?.split(':')[0] || null,
+    }));
+    res.json({ sessions: list });
 });
 
 // ── PAIR ──────────────────────────────────
@@ -573,3 +591,4 @@ app.listen(PORT, '0.0.0.0', () => {
 
 process.on('uncaughtException', err => console.error('Exception:', err));
 process.on('unhandledRejection', err => console.error('Rejection:', err));
+            
