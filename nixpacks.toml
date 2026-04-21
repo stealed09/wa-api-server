@@ -1,0 +1,11 @@
+# Yeh file Railway ko batati hai
+# Ki Node.js use karna hai Python nahi
+
+[phases.setup]
+nixPkgs = ["nodejs_18", "npm-9_x"]
+
+[phases.install]
+cmds = ["npm install"]
+
+[start]
+cmd = "node index.js"
